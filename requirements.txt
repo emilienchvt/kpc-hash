@@ -1,0 +1,5 @@
+# jupyter notebook
+jupyter==1.0.0
+
+# maths stuff
+scipy==1.2.1
