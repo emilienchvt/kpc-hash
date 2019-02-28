@@ -33,6 +33,11 @@ class Slide:
         else:
             raise ValueError("Bad photos in the same slides")
 
+    def compute_score_with(self, next_slide):
+        tags_in_common = self.tags.intersection(next_slide.tags)
+        tags_left = self.tags.difference(next_slide.tags)
+        tags_right = next_slide.tags.difference(self.tags)
+        return min([len(tags_in_common), len(tags_left), len(tags_right)])
 
 class SlideShow:
     def __init__(self, slides):
@@ -45,10 +50,7 @@ class SlideShow:
         for i in range(0, len(self.slides) - 1):
             slide = self.slides[i]
             next_slide = self.slides[i+1]
-            tags_in_common = slide.tags.intersection(next_slide.tags)
-            tags_left = slide.tags.difference(next_slide.tags)
-            tags_right = next_slide.tags.difference(slide.tags)
-            score += min([len(tags_in_common), len(tags_left), len(tags_right)])
+            score += slide.compute_score_with(next_slide)
         return score
 
     def write_output(self, filename):
