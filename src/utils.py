@@ -1,5 +1,64 @@
 from os import listdir
 
+class Photo:
+    def __init__(self, orientation, tags, photo_id):
+        if orientation not in ['H', 'V']:
+            raise ValueError("Unknown orientation")
+        self.orientation = orientation
+        self.tags = tags
+        self.photo_id = photo_id
+
+class Slide:
+    def __init__(self, photos):
+        if len(photos)==1:
+            assert photos[0].orientation == "H"
+        elif len(photos)==2:
+            assert photos[0].orientation == "V" and photos[1].orientation == "V"
+        else:
+            raise ValueError("Bad photos in the same slides")
+        self.photos = photos
+        self.tags = self._get_tags()
+
+    def _get_tags(self):
+        if len(self.photos) == 1:
+            return set(self.photos[0].tags)
+        else:
+            return set(self.photos[0].tags + self.photos[1].tags)
+
+    def print_line(self):
+        if len(self.photos)==1:
+            return "{}\n".format(self.photos[0].photo_id)
+        elif len(self.photos)==2:
+            return "{} {}\n".format(self.photos[0].photo_id, self.photos[1].photo_id)
+        else:
+            raise ValueError("Bad photos in the same slides")
+
+
+class SlideShow:
+    def __init__(self, slides):
+        assert type(slides) == list
+        assert len(slides) > 0
+        self.slides = slides
+
+    def compute_score(self):
+        score = 0
+        for i in range(0, len(self.slides) - 1):
+            slide = self.slides[i]
+            next_slide = self.slides[i+1]
+            tags_in_common = slide.tags.intersection(next_slide.tags)
+            tags_left = slide.tags.difference(next_slide.tags)
+            tags_right = next_slide.tags.difference(slide.tags)
+            score += min([len(tags_in_common), len(tags_left), len(tags_right)])
+        return score
+
+    def write_output(self, filename):
+        slides_count = len(self.slides)
+        file = open(filename, 'w')
+        file.write('{}\n'.format(slides_count))
+        for slide in self.slides:
+             file.write(slide.print_line())
+        file.close()
+
 class HashCodeProblem:
     def __init__(self, instance_folder='data', output_folder='output'):
         self.instance_folder = instance_folder
@@ -15,69 +74,16 @@ class HashCodeProblem:
         f = open('{}/{}'.format(self.instance_folder, input_file), 'r')
         first_line = f.readline()
 
-        row_count, column_count, min_ingredients, max_area = tuple(map(int, first_line.split(' ')))
+        image_count = int(first_line)
 
-        grid = []
-        for i in range(row_count):
-            grid.append(f.readline().rstrip())
+        photos = []
+        for i in range(image_count):
+            l = f.readline()[:-1].split(' ')
+            orientation = l[0]
+            tag_count = l[1]
+            tags = l[2:]
+            photo_id = i
+            photos.append(Photo(orientation, tags, photo_id))
 
         f.close()
-        return row_count, column_count, min_ingredients, max_area, grid
-
-    def solve_instance(self, row_count, column_count, min_ingredients, max_area, grid, debug=False):
-        result_slices = []
-        for r in range(row_count):
-            if debug:
-                print('Column {}'.format(r))
-            counts = {
-                "T":0,
-                "M":0,
-            }
-            beg=0
-            i=0
-            while i<column_count:
-                if debug:
-                    print('Cursor {}'.format(i))
-                counts[grid[r][i]]+=1
-                if counts['T'] > min_ingredients and counts['M'] > min_ingredients and i-beg+1<=max_area:
-                    result_slices.append((r, beg, r, i))
-                    beg=i+1
-                    counts = {
-                        "T":0,
-                        "M":0,
-                    }
-                i+=1
-        return result_slices
-
-    def compute_score(self, result_slices):
-        return sum([(c2-c1+1) * (r2-r1+1) for ((r1, c1, r2, c2)) in result_slices])
-
-    def format_output(self, result_slices, output_name, test=False):
-        file = open(output_name, 'w')
-        n_slices = len(result_slices)
-        score = self.compute_score(result_slices)
-        if score > self.output_files[output_name]:
-            self.output_files[output_name] = score
-            file.write('{}\n'.format(n_slices))
-            if test:
-                print('{}\n'.format(n_slices))
-            else:
-                print('You scored {}'.format(score))
-            for result_slice in result_slices:
-                r1, c1, r2, c2 = result_slice
-                file.write('{} {} {} {}\n'.format(r1, c1, r2, c2))
-                if test:
-                    print('{} {} {} {}\n'.format(r1, c1, r2, c2))
-            file.close()
-            print('Saved in {}'.format(output_name))
-        else:
-            print('Scored {}, less than current score {}'.format(score, self.output_files[output_name]))
-
-    def solve_instances(self, instances):
-        for instance in instances:
-            instance_data = self.parse_input(instance)
-            slices = self.solve_instance(*instance_data)
-            self.format_output(slices, instance)
-
-    def solve_all_instances(self):
-        self.solve_instances(self.instance_files)
+        return image_count, photos
