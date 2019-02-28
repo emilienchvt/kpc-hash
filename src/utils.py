@@ -93,9 +93,12 @@ class HashCodeProblem:
     def solve_instance(self, input_file):
         p_input = self.parse_input(input_file)
         photos = p_input[1]
-        photos_v = [photo for photo in photos if photo.orientation=="H"]
-        slides = [Slide([photo]) for photo in photos_v]
+        photos_h = [photo for photo in photos if photo.orientation=="H"]
+        photos_v = [photo for photo in photos if photo.orientation=="V"]
+        slides = [Slide([photo]) for photo in photos_h]
+        for i in range(len(photos_v)//2):
+            slide.append(Slide([photo_v[i], photo_v[i+1]]))
         slide_show = SlideShow(slides)
         score = slide_show.compute_score()
-        slide_show.write_output("./out/"+input_file)
+        slide_show.write_output("./output/"+input_file)
         return score
