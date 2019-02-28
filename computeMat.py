@@ -3,7 +3,11 @@ import pandas as pd
 import scipy.sparse
 
 from src.utils import Photo, Slide, SlideShow, HashCodeProblem
+from scipy.spatial.distance import cdist
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+
+def myDist(x,y):
+	return (x - y > 0)
 
 def compute_mat(filename='a_example.txt'):
 
@@ -31,7 +35,6 @@ def compute_mat(filename='a_example.txt'):
 	tags_oo = np.concatenate(tags_oo)
 
 	M_sc = np.dot(tags_oo,tags_oo.T)
-	M_diff1 = M_sc
-	M_diff2 = M_sc
+	M_diff1 = cdist(tags_oo,tags_oo,myDist)
 
-	return np.min((M_sc,M_diff1,M_diff2))
+	return np.min((M_sc,M_diff1,M_diff1.T))
